@@ -22,12 +22,16 @@ body {
   padding:16px;
 }
 
-#file {
+.filecontainer {
   border:0px solid #aaa;
   background:#ddd;
   border-radius:5px;
-  padding:4px;
+  padding:8px;
   
+}
+
+#ipscontainer {
+  display:none;
 }
 
 #name {
@@ -60,4 +64,6 @@ body {
 
 #save {
   font-size:1.5em;
+  margin-top:16px;
+  display:none;
 }

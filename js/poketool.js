@@ -7,6 +7,7 @@ var games = {};
 
 function init() {
     document.getElementById("file").addEventListener("change", readFile, false);
+    document.getElementById("ipsfile").addEventListener("change", readIPS, false);
     document.getElementById("save").addEventListener("click", saveFile);
 }
 
@@ -38,50 +39,61 @@ function writeBytes(offset, bytes, u8) {
     u8.set(bytes, offset);
 }
 
-function applyPatch(url) {
+function applyPatch(url, cb) {
     var r = new XMLHttpRequest();
     r.responseType = "arraybuffer";
     r.addEventListener("load", function() {
         var data = this.response;
 
-        var u8 = new Uint8Array(data);
-        //console.log(readBytes(5,3,u8));
-        if ((new TextDecoder("utf-8")).decode(readBytes(0, 5, u8)) === "PATCH") {
-            // apply it
-            // format: 3 bytes for where, 2 bytes for len, then len bytes
-            var running = 5;
-            var offset = readBytes(running, 3, u8);
-            while ((new TextDecoder("utf-8")).decode(offset) !== "EOF") {
-                running += 3;
-                var len = numberFromBytes(readBytes(running, 2, u8));
-                //console.log(readBytes(running, 2, u8));
-                offset = numberFromBytes(offset);
-                running += 2;
-
-                if (len === 0) {
-                    var times = numberFromBytes(readBytes(running, 2, u8));
-                    running += 2;
-                    var byte = readBytes(running, 1, u8);
-                    running++;
-
-                    for (var i = 0; i < times; i++) {
-                        writeBytes(offset + i, byte);
-                    }
-                } else {
-                    writeBytes(offset, readBytes(running, len, u8));
-                    running += len;
-                }
-
-                offset = readBytes(running, 3, u8);
-                //console.log(running);
-            }
+        if (applyPatchData(data)) {
             alert("Done!");
         } else {
-            console.log((new TextDecoder("utf-8")).decode(readBytes(0, 5, u8)));
+            alert("Invalid IPS file.");
         }
+
     });
     r.open("GET", url);
     r.send();
+}
+
+function applyPatchData(data) {
+    var u8 = new Uint8Array(data);
+    //console.log(readBytes(5,3,u8));
+    if ((new TextDecoder("utf-8")).decode(readBytes(0, 5, u8)) === "PATCH") {
+        // apply it
+        // format: 3 bytes for where, 2 bytes for len, then len bytes
+        var running = 5;
+        var offset = readBytes(running, 3, u8);
+        while ((new TextDecoder("utf-8")).decode(offset) !== "EOF") {
+            running += 3;
+            var len = numberFromBytes(readBytes(running, 2, u8));
+            //console.log(readBytes(running, 2, u8));
+            offset = numberFromBytes(offset);
+            running += 2;
+
+            if (len === 0) {
+                var times = numberFromBytes(readBytes(running, 2, u8));
+                running += 2;
+                var byte = readBytes(running, 1, u8);
+                running++;
+
+                for (var i = 0; i < times; i++) {
+                    writeBytes(offset + i, byte);
+                }
+            } else {
+                writeBytes(offset, readBytes(running, len, u8));
+                running += len;
+            }
+
+            offset = readBytes(running, 3, u8);
+            //console.log(running);
+        }
+
+        return true;
+    } else {
+        console.log((new TextDecoder("utf-8")).decode(readBytes(0, 5, u8)));
+        return false;
+    }
 }
 
 function numberFromBytes(u8) {
@@ -120,6 +132,9 @@ function readFile(e) {
                 games[gc].modules[i].build(container);
                 document.getElementById("container-modules").appendChild(container);
             }
+
+            document.getElementById("ipscontainer").style.display = "inline-block";
+            document.getElementById("save").style.display = "inline-block";
         } else {
             alert("Game not supported! " + gc);
             document.getElementById("name").innerText = "^^^ Select a file ^^^";
@@ -128,6 +143,25 @@ function readFile(e) {
 
     reader.readAsArrayBuffer(file);
     //e.target.files = [];
+}
+
+function readIPS(e) {
+    var file = e.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function(_e) {
+        var data = this.result;
+        if (applyPatchData(data)) {
+            alert("Done!");
+        } else {
+            alert("Invalid IPS file.");
+        }
+    }
+
+    reader.readAsArrayBuffer(file);
 }
 
 function saveFile() {

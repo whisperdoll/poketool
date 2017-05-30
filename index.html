@@ -14,10 +14,18 @@
     </head>
     <body>
         <div id="container">
-            <input type="file" id="file" accept=".gba" />
+            <span class="filecontainer">
+                <label for="ipsfile" class="btn">Select GBA ROM:</label>
+                <input type="file" id="file" accept=".gba" />
+            </span>
             <div id="name">^^^ Select a file ^^^</div>
             <div id="container-modules"></div>
-            <button id="save">Save</button>
+            <span class="filecontainer" id="ipscontainer">
+                <label for="ipsfile" class="btn">Apply Custom IPS Patch:</label>
+                <input type="file" id="ipsfile" accept=".ips" />
+            </span>
+            <br>
+            <button id="save">Save modified ROM</button>
         </div>
     </body>
 </html>
